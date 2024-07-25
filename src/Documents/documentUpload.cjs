@@ -10,6 +10,7 @@ const os = require("os");
 const { pipeline } = require('stream/promises');
 const error = require('../errors.cjs');
 const stream = require('stream');
+
 const MAX_WORKERS = os.cpus().length;
 const processedFiles = new Set();
 
@@ -43,6 +44,7 @@ async function loadFiles(){
                 .pipe(csv())
                 .on('data', (row) => {
                     if (row){
+                        //adds files already uploaded to a set
                         processedFiles.add(getKey({file: row.FILE, pat_id: row.PAT_ID}));
                     }
                 })
@@ -69,6 +71,7 @@ async function uploadDocs(csv_file){
         fs.mkdirSync("./Upload Status", { recursive: true} )
     }
     
+    //create errors.csv file if one does not already exist
     if (!fs.existsSync("./Upload Status/errors.csv")){
         fs.writeFile("./Upload Status/errors.csv", "FILE,PAT_ID,STATUS\n", 'utf8', () => {});
     }
@@ -80,12 +83,13 @@ async function uploadDocs(csv_file){
     const success = [];
     const errors = [];
     const csvParser = csv({
-        mapHeaders: ({ header, index }) => {
+        mapHeaders: ({ header }) => {
             headers.push(header);
             return header;
         }
     });
 
+    //grabs all of the headers from the CSV file.
     csvParser.on('error', (err) => {
         log.createLog("error", "Bad Request");
         throw new error.customError(error.CSV_PARSING_ERROR,  `There was an error parsing your CSV file. Make sure it is formatted correctly. Error: ${err}`);
@@ -100,7 +104,7 @@ async function uploadDocs(csv_file){
                 //if row is header, store it in an array
                 if (!processedFiles.has(getKey({file: row.document_name, pat_id: row.pat_id}))){
                     processedFiles.add(getKey({file: row.document_name, pat_id: row.pat_id}));
-                    docQueue.push(row);
+                    docQueue.push(row); //push to queue for workers
                 }
                 callback();
             }
@@ -112,9 +116,10 @@ async function uploadDocs(csv_file){
 
             function newWorker(){
                 const row = docQueue.shift();
+                console.log(row);
                 if (!row){
-                   resolve();
-                   return;
+                    resolve();
+                    return;
                 }
 
                 const worker = new Worker(path.join(__dirname, "/Parallelism/uploadDoc.cjs"), { workerData: {row: row, URL: URL.value, Cookie: cookie.value, Practice: practice.value}})

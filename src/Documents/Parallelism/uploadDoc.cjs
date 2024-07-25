@@ -4,18 +4,12 @@ const log = require('../../Logging/createLog.cjs');
 const FormData = require('form-data');
 const error = require('../../errors.cjs');
 const { workerData, parentPort } = require('worker_threads');
+const { mapOne, mapTwo } = require('./../docMappings.cjs');
 
 //this function is used for multi-threading
 async function uploadSingleDocument(upload_data, URL, Cookie, Practice){
 
-    let filename = upload_data['document_name'];
-
-    //convert HTM and TIF file types
-    if (filename.endsWith(".htm")){
-        convertFile(4, ".html", 4);
-     } else if (filename.endsWith(".tif") || filename.endsWith(".tiff")) {
-        filename.endsWith(".tif") == true ? convertFile(4, ".png", 3) : convertFile(5, ".png", 3);
-     }
+    let filename;
 
     function convertFile(extension_length, new_extension, new_storage){
         fs.rename(filename, (filename.slice(0, filename.length - extension_length) + new_extension), (err) => {
@@ -28,36 +22,29 @@ async function uploadSingleDocument(upload_data, URL, Cookie, Practice){
     }
 
     const form = new FormData();
-    try {
-        if (upload_data['service_date'])
-            form.append('service_date', upload_data['service_date']);
-        
-        if (upload_data['service_location'])
-            form.append('service_location', upload_data['service_location']);
-        
-        if (upload_data['storage_type']) 
-            form.append('storage_type', upload_data['storage_type']);
-        
-        if (upload_data['subject'])
-            form.append('subject', upload_data['subject']);
-        
-        //required headers
-        form.append('f', 'chart');
-        form.append('s', 'upload');
-        form.append('doc_type', upload_data['doc_type']);
-        form.append('file', fs.createReadStream(filename));
-        form.append('pat_id', upload_data['pat_id']);
-        form.append('interface', 'WC_DATA_IMPORT');
+    form.append('f', 'chart');
+    form.append('s', 'upload');
 
-        if (upload_data['mrnumber']) {
-            form.append('mrnumber', upload_data['mrnumber']);
+    //iterate over each key
+    for (const [key, value] of mapOne.entries()){
+        if (value == "file"){
+
+            filename = upload_data[key];
+
+            //convert HTM and TIF file types
+            if (filename.endsWith(".htm")){
+                convertFile(4, ".html", 4);
+            } else if (filename.endsWith(".tif") || filename.endsWith(".tiff")) {
+                filename.endsWith(".tif") == true ? convertFile(4, ".png", 3) : convertFile(5, ".png", 3);
+            }
+
+            form.append(value, fs.createReadStream(filename));
+
         } else {
-            form.append('mrnumber', `MR-${upload_data['pat_id']}`);
+            let headerValue;
+            upload_data[key] ? headerValue = upload_data[key] : headerValue = "";
+            form.append(value, headerValue);
         }
-
-    } catch (err) {
-        log.createLog("error", "Bad Request");
-        throw new error.customError(error.CSV_PARSING_ERROR,  `There was an error parsing your CSV file. Make sure it is formatted correctly. Error: ${err}`);
     }
 
     log.createLog("info", `Document Upload Request:\nDocument Type: \"${upload_data['doc_type']}\"\nStorage Type: \"${upload_data['storage_type']}\"\n Patient ID: ${upload_data['pat_id']}`);
@@ -69,6 +56,7 @@ async function uploadSingleDocument(upload_data, URL, Cookie, Practice){
     })
     .then(response => {
         const result = response.headers['x-status'];
+        // console.log(result);
         if (result != 'success'){
             parentPort.postMessage({ success: false, filename: filename, result: response.headers['x-status_desc'] });
         } else {
