@@ -40,7 +40,7 @@ jobs:
           URL: ${{ secrets.URL }}
           PRACTICE: ${{ secrets.PRACTICE }}
       - name: Perform Mocha Tests - 2/3
-        run: npm headerTestOne
+        run: npm run headerTestOne
         env:
           USERNAME: ${{ secrets.USERNAME }}
           PASSWORD: ${{ secrets.PASSWORD }}
@@ -48,7 +48,7 @@ jobs:
           URL: ${{ secrets.URL }}
           PRACTICE: ${{ secrets.PRACTICE }}
       - name: Perform Mocha Tests - 3/3
-        run: npm headerTestTwo
+        run: npm run headerTestTwo
         env:
           USERNAME: ${{ secrets.USERNAME }}
           PASSWORD: ${{ secrets.PASSWORD }}
@@ -85,7 +85,7 @@ jobs:
           URL: ${{ secrets.URL }}
           PRACTICE: ${{ secrets.PRACTICE }}
       - name: Perform Mocha Tests - 2/3
-        run: npm headerTestOne
+        run: npm run headerTestOne
         env:
           USERNAME: ${{ secrets.USERNAME }}
           PASSWORD: ${{ secrets.PASSWORD }}
@@ -93,7 +93,7 @@ jobs:
           URL: ${{ secrets.URL }}
           PRACTICE: ${{ secrets.PRACTICE }}
       - name: Perform Mocha Tests - 3/3
-        run: npm headerTestTwo
+        run: npm run headerTestTwo
         env:
           USERNAME: ${{ secrets.USERNAME }}
           PASSWORD: ${{ secrets.PASSWORD }}
