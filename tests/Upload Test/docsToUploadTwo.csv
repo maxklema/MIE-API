@@ -1,5 +1,5 @@
-pat_id,document_name,doc_type,mrnumber
-14,tests/Upload Test/Documents/autumn.jpg,WCPHOTO,MR-14
-18,tests/Upload Test/Documents/Hart_109.txt,US,MR-18
-14,tests/Upload Test/Documents/110.txt,US,MR-14
-18,tests/Upload Test/Documents/Doe2.htm,ORDIM,MR-18
+mrnumber,filepath,doctype
+10019,tests/Upload Test/Documents/autumn.jpg,WCPHOTO
+10019,tests/Upload Test/Documents/Hart_109.txt,US
+10019,tests/Upload Test/Documents/110.txt,US
+10019,tests/Upload Test/Documents/Doe2.htm,ORDIM
