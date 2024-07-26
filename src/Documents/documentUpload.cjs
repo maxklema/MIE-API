@@ -1,25 +1,59 @@
-const session = require('../Session Management/getCookie.cjs');
 const fs = require('fs');
-const { URL, practice, cookie } = require('../Variables/variables.cjs');
 const csv = require('csv-parser');
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
-const log = require('../Logging/createLog.cjs');
 const { Worker } = require('worker_threads');
 const path = require('path');
 const os = require("os");
 const { pipeline } = require('stream/promises');
-const error = require('../errors.cjs');
 const stream = require('stream');
+const yargs = require('yargs');
+
+const session = require('../Session Management/getCookie.cjs');
+const error = require('../errors.cjs');
+const { URL, practice, cookie } = require('../Variables/variables.cjs');
+const log = require('../Logging/createLog.cjs');
 
 const MAX_WORKERS = os.cpus().length;
 const processedFiles = new Set();
+
+let file = "filePath";
+let mrnumber = "mrNumber";
+let pat_id = "patID";
+let mapping;
+
+//args
+const argv = yargs
+    .option('mapping', {
+        alias: 'm',
+        description: 'Provide a mapping value when uploading documents',
+        type: 'string'
+    })
+    .help()
+    .argv;
+
+mapping = argv.mapping;
+
+//header names dependent on mapping
+if (mapping){
+    if (argv.mapping == "two") {
+        file = "filepath";
+        mrnumber = "mrnumber";
+        pat_id = "patid";
+    } else if (mapping != "one") {
+        log.createLog("error", "Invalid Flag");
+        throw new error.customError(error.INVALID_FLAG,  `The flag you provided for \"mapping\" is invalid.`);
+    }
+} else {
+    mapping = "one";
+}
 
 // success file CSV writer
 const successCSVWriter = createCsvWriter({
     path: './Upload Status/success.csv',
     header: [
         {id: 'file', title: 'FILE'},
-        {id: 'patID', title: 'PAT_ID'},
+        {id: 'pat_id', title: 'PAT_ID'},
+        {id: 'mrnumber', title: 'MRNUMBER'},
         {id: 'status', title: 'STATUS'}
     ],
     append: true
@@ -30,7 +64,8 @@ const errorCSVWriter = createCsvWriter({
     path: './Upload Status/errors.csv',
     header: [
         {id: 'file', title: 'FILE'},
-        {id: 'patID', title: 'PAT_ID'},
+        {id: 'pat_id', title: 'PAT_ID'},
+        {id: 'mrnumber', title: 'MRNUMBER'},
         {id: 'status', title: 'STATUS'}
     ],
     append: true
@@ -45,14 +80,14 @@ async function loadFiles(){
                 .on('data', (row) => {
                     if (row){
                         //adds files already uploaded to a set
-                        processedFiles.add(getKey({file: row.FILE, pat_id: row.PAT_ID}));
+                        processedFiles.add(getKey({file: row.FILE, pat_id: row.PAT_ID, mrnumber: row.MRNUMBER}));
                     }
                 })
                 .on('end', resolve)
                 .on('error', reject);
         })
     } else {
-        fs.writeFile("./Upload Status/success.csv", "FILE,PAT_ID,STATUS\n", 'utf8', () => {});
+        fs.writeFile("./Upload Status/success.csv", "FILE,PAT_ID,MRNUMBER,STATUS\n", 'utf8', () => {});
     }
 }
 
@@ -73,7 +108,7 @@ async function uploadDocs(csv_file){
     
     //create errors.csv file if one does not already exist
     if (!fs.existsSync("./Upload Status/errors.csv")){
-        fs.writeFile("./Upload Status/errors.csv", "FILE,PAT_ID,STATUS\n", 'utf8', () => {});
+        fs.writeFile("./Upload Status/errors.csv", "FILE,PAT_ID,MRNUMBER,STATUS\n", 'utf8', () => {});
     }
 
     await loadFiles();
@@ -102,8 +137,8 @@ async function uploadDocs(csv_file){
             objectMode: true,
             write(row, encoding, callback) {
                 //if row is header, store it in an array
-                if (!processedFiles.has(getKey({file: row.document_name, pat_id: row.pat_id}))){
-                    processedFiles.add(getKey({file: row.document_name, pat_id: row.pat_id}));
+                if (!processedFiles.has(getKey({file: row[file], pat_id: row[pat_id] ? row[pat_id] : "null", mrnumber: row[mrnumber] ? row[mrnumber] : "null"}))){
+                    processedFiles.add(getKey({file: row[file], pat_id: row[pat_id] ? row[pat_id] : "null", mrnumber: row[mrnumber] ? row[mrnumber] : "null"}));
                     docQueue.push(row); //push to queue for workers
                 }
                 callback();
@@ -116,26 +151,25 @@ async function uploadDocs(csv_file){
 
             function newWorker(){
                 const row = docQueue.shift();
-                console.log(row);
                 if (!row){
                     resolve();
                     return;
                 }
 
-                const worker = new Worker(path.join(__dirname, "/Parallelism/uploadDoc.cjs"), { workerData: {row: row, URL: URL.value, Cookie: cookie.value, Practice: practice.value}})
+                const worker = new Worker(path.join(__dirname, "/Parallelism/uploadDoc.cjs"), { workerData: {row: row, URL: URL.value, Cookie: cookie.value, Practice: practice.value, Mapping: argv.mapping}})
     
                 worker.on('message', (message) => {
                     if (message.success == true){ 
                         log.createLog("info", `Document Upload Response:\nFilename \"${message.filename}\" was successfully uploaded: ${message.result}`);
-                        success.push({ file: row.document_name, patID: row.pat_id, status: 'Success'});
+                        success.push({ file: row[file], pat_id: row[pat_id] ? row[pat_id] : "null", mrnumber: row[mrnumber] ? row[mrnumber] : "null", status: 'Success'});
                         newWorker();
                     } else if (message.success == false) {
                         log.createLog("info", `Document Upload Response:\nFilename \"${message.filename}\" failed to upload: ${message.result}`);
-                        errors.push({ file: row.document_name, patID: row.pat_id, status: 'Failed Upload'})
+                        errors.push({ file: row[file], pat_id: row[pat_id] ? row[pat_id] : "null", mrnumber: row[mrnumber] ? row[mrnumber] : "null", status: 'Failed Upload'})
                         newWorker();
                     } else {
                         log.createLog("error", "Bad Request");
-                        errors.push({ file: row.document_name, patID: row.pat_id, status: `Failed Upload - Bad Request: ${message.result}`})
+                        errors.push({ file: row[file], pat_id: row[pat_id] ? row[pat_id] : "null", mrnumber: row[mrnumber] ? row[mrnumber] : "null", status: 'Failed Upload'})
                         newWorker();
                     }
                 });

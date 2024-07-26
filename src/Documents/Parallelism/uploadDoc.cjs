@@ -7,11 +7,15 @@ const { workerData, parentPort } = require('worker_threads');
 const { mapOne, mapTwo } = require('./../docMappings.cjs');
 
 //this function is used for multi-threading
-async function uploadSingleDocument(upload_data, URL, Cookie, Practice){
+async function uploadSingleDocument(upload_data, URL, Cookie, Practice, Mapping){
 
+    let map;
     let filename;
 
+    Mapping == "one" ? map = mapOne : map = mapTwo;
+
     function convertFile(extension_length, new_extension, new_storage){
+        
         fs.rename(filename, (filename.slice(0, filename.length - extension_length) + new_extension), (err) => {
             if (err) {
                 console.error(err);
@@ -26,7 +30,7 @@ async function uploadSingleDocument(upload_data, URL, Cookie, Practice){
     form.append('s', 'upload');
 
     //iterate over each key
-    for (const [key, value] of mapOne.entries()){
+    for (const [key, value] of map.entries()){
         if (value == "file"){
 
             filename = upload_data[key];
@@ -56,7 +60,6 @@ async function uploadSingleDocument(upload_data, URL, Cookie, Practice){
     })
     .then(response => {
         const result = response.headers['x-status'];
-        // console.log(result);
         if (result != 'success'){
             parentPort.postMessage({ success: false, filename: filename, result: response.headers['x-status_desc'] });
         } else {
@@ -69,4 +72,4 @@ async function uploadSingleDocument(upload_data, URL, Cookie, Practice){
 
 }
 
-uploadSingleDocument(workerData['row'], workerData['URL'], workerData['Cookie'], workerData['Practice']);
+uploadSingleDocument(workerData['row'], workerData['URL'], workerData['Cookie'], workerData['Practice'], workerData['Mapping']);
