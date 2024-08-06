@@ -2,7 +2,7 @@ import assert from 'assert';
 import mie from '../index.cjs';
 
 mie.URL.value = process.env.URL;
-mie.practice.value = process.env.PRACTICE;
+mie.practice.value = process.env.HANDLE;
 mie.username.value = process.env.USERNAME;
 mie.password.value = process.env.PASSWORD;
 mie.GeminiKey.value = process.env.GEMINI_KEY;

@@ -26,7 +26,7 @@ describe('MIE API TESTS', async () => {
 
     describe("Retrieve Records", async () => {
         
-        it.only('Retrieve Records - No Fields', async () => {
+        it('Retrieve Records - No Fields', async () => {
             
             const data = await mie.retrieveRecord("patients", [], {pat_id: 18});
 

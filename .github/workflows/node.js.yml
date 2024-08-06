@@ -40,14 +40,14 @@ jobs:
           PASSWORD: ${{ secrets.PASSWORD }}
           GEMINI_KEY: ${{ secrets.GEMINI_KEY }}
           URL: ${{ secrets.URL }}
-          PRACTICE: ${{ secrets.HANDLE }}
+          HANDLE: ${{ secrets.HANDLE }}
       - name: Perform Mocha Tests - 2/2
         run: npm run migrations
         env:
           USERNAME: ${{ secrets.USERNAME }}
           PASSWORD: ${{ secrets.PASSWORD }}
           URL: ${{ secrets.URL }}
-          PRACTICE: ${{ secrets.HANDLE }}
+          HANDLE: ${{ secrets.HANDLE }}
 
   rocky-linux:
     runs-on: ubuntu-latest
@@ -76,11 +76,11 @@ jobs:
           PASSWORD: ${{ secrets.PASSWORD }}
           GEMINI_KEY: ${{ secrets.GEMINI_KEY }}
           URL: ${{ secrets.URL }}
-          PRACTICE: ${{ secrets.HANDLE }}
+          HANDLE: ${{ secrets.HANDLE }}
       - name: Perform Mocha Tests - 2/2
         run: npm run migrations
         env:
           USERNAME: ${{ secrets.USERNAME }}
           PASSWORD: ${{ secrets.PASSWORD }}
           URL: ${{ secrets.URL }}
-          PRACTICE: ${{ secrets.HANDLE }}
+          HANDLE: ${{ secrets.HANDLE }}
