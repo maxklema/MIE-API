@@ -16,7 +16,14 @@ A package designed to interact with [MIE's](https://www.mieweb.com/) (Medical In
 - [Creating Records](#Creating-Records)
 - [Patient Documents](#Patient-Documents)
   - [Downloading Documents](#Downloading-Documents)
-  - [Uploading Documents](#Uploading-Documents)
+  - [Migrating Documents](#Migrating-Documents)
+    - [Configuration](#Configuration)
+    - [Mappings](#Mappings)
+    - [Custom Mappings](#Custom-Mappings)
+    - [Outputs](#Outputs)
+      - [Successes](#Successes)
+      - [Errors](#Errors)
+    - [Example CSV](#Example-CSV)
 - [AI Capabilities](#AI-Capabilities)
   - [Summarize Patient's Medical History](#Summarize-a-Patients-Medical-History)
   - [Ask Questions About Patient's Medical History](#Ask-Questions-About-a-Patients-Medical-History)
@@ -67,7 +74,7 @@ As of version **1.0.7**, importing @maxklema/mie-api-tools using `import` does n
   - Downloading Documents
     - Download multiple documents through querying
     - **Multi-Threading** allows for extremely fast downloading
-  - Uploading Documents
+  - Document Migration
     - Upload multiple documents with through a CSV file
     - **Multi-Threading** allows for extremely fast uploading
 - AI Capabilities (using [Gemini](https://ai.google.dev/))
@@ -348,22 +355,87 @@ mie.downloadDocs({ storage_type: 8, doc_type: "WCPHOTO" }, "downloads", 0);
 
 > Example Folder: [here](https://github.com/maxklema/mie-api-tools/tree/main/examples/Download%20Documents).
 
-### Uploading Documents
+### Migrating Documents
 
-MIE API Tools allows you to upload any amount of documents at once by crafting a custom CSV file (see more below). With uploading capabilities, you are able to specify fields such as `subject`, `service_location`, and `service_date` with each upload.
+MIE API Tools allows you to upload any amount of documents at once by crafting a custom CSV file (see more below). With uploading capabilities, you are able to specify header fields.
 
-MIE API Tools allows you to upload documents using a CSV file. The CSV file contains seven headers:
+The basic structure of the request is as follows:
 
-| Name               | Required?    | Type    | Description                                                                                                                                                                                                       |
-| ------------------ | ------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `filename`         | **Required** | String  | The file path of the file that you want to upload to a patient's portal.                                                                                                                                          |
-| `storageType`      | Optional     | Integer | The storage type of the file that you are uploading. For a full list, see [Custom Documents](https://docs.enterprisehealth.com/functions/system-administration/data-migration/custom-documents-csv-api/#process). |
-| `docType`          | **Required** | String  | The type of document that is being uploaded. For example, `WCPHOTO` for a patient photo.                                                                                                                          |
-| `patID`            | **Required** | Integer | The patient ID of the patient for whom you want to upload a document.                                                                                                                                             |
-| `mrnumber`         | Optional     | String  | The `MR-#` of the patient for whom you want to upload a document.                                                                                                                                                 |
-| `subject`          | Optional     | String  | A description of the document being uploaded.                                                                                                                                                                     |
-| `service_location` | Optional     | String  | The location from which the document originated.                                                                                                                                                                  |
-| `service_date`     | Optional     | String  | The date when the medical service or procedure was provided to a patient, or when the particular service or claim was processed.                                                                                  |
+```javascript
+mie.migrateData(jsonObject);
+```
+
+`mie.migrateData()` accepts the following parameter:
+
+| Name         | Required? | Type   | Description                                         |
+| ------------ | --------- | ------ | --------------------------------------------------- |
+| `jsonObject` | Required  | Object | The JSON Object with your migration configurations. |
+
+#### Configuration
+
+To upload documents, you need a configuration JSON object. This object should include everything needed to make a data migration, including your WebChart credentials, output directory, mapping, threads, etc.
+
+The following table describes each available property.
+
+| Property        | Required? | Type            | Description                                                                                                                                                                                                                                   |
+| --------------- | --------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `username`      | Variable  | String          | Your login username for your WebChart system. This field is required if `mie.username.value` is empty.                                                                                                                                        |
+| `password`      | Variable  | String          | The login password for your WebChart system. This field is required if `mie.password.value` is empty.                                                                                                                                         |
+| `handle`        | Variable  | String          | The name of your WebChart system. This field is required if `mie.handle.value` is empty.                                                                                                                                                      |
+| `url`           | Variable  | String          | The URL of your WebChart. It should look something similar to `"https://practice.webchartnow.com/webchart.cgi"`. This field is required if `mie.URL.value` is empty.                                                                          |
+| `input_data`    | Required  | Array Object    | A list of filepaths to your input CSV file or files (you can have multiple data migrations).                                                                                                                                                  |
+| `output_dir`    | Optional  | String          | The root output directory where you want the results of your migrations to be stored. The default directory is `Output/`.                                                                                                                     |
+| `mapping`       | Required  | String / Object | The mapping translation for your input CSV headers. As of 1.0.0, pre-templated mappings `one` and `two` are available. To see these mappings, view [mappings](#Mappings). To create custom mappings, see [custom mappings](#Custom-Mappings). |
+| `threads`       | Optional  | Integer         | The number of worker threads you want working at once. The default is your number of CPU cores.                                                                                                                                               |
+| `csv_delimiter` | Variable  | String          | The character that separates data in your CSV files. The default delimiter is `,`. If you have a different delimiter, you need to include this header.                                                                                        |
+
+#### Mappings
+
+Mappings translate your CSV headers to those that WebChart understands. This is necessary since different EHRs may have different headers and capitalizations.
+
+For a detailed description of each header, see the 'Documents' API documentation on your WebChart.
+
+| Mapping One [`one`] | Mapping One [`two`] | Translation         |
+| ------------------- | ------------------- | ------------------- |
+| filePath            | filepath            | file                |
+| mrNumber            | mrnumber            | mrnumber            |
+| docID               | docid               | doc_id              |
+| revisionNumber      | revisionnumber      | revision_number     |
+| userID              | userid              | user_id             |
+| originID            | originid            | origin_id           |
+| patID               | patid               | pat_id              |
+| docType             | doctype             | doc_type            |
+| storageType         | storagetype         | storage_type        |
+| storageID           | storageid           | storage_id          |
+| serviceLocation     | servicelocation     | service_location    |
+| originDate          | origindate          | origin_date         |
+| enterDate           | enterdate           | enter_date          |
+| revisionDater       | revisiondate        | revision_date       |
+| serviceDate         | servicedate         | service_date        |
+| approxServiceDate   | approxservicedate   | approx_service_date |
+| interface           | interface           | interface           |
+| inpatient           | inpatient           | inpatient           |
+| allowForTeaching    | allowforteaching    | allow_for_teaching  |
+| subject             | subject             | subject             |
+
+> **NOTE:** Some EHRs may export data with headers not included in this list. In that case, you do not have to remove them from the CSV import file. They will be ignored by the program.
+
+#### Custom Mappings
+
+Custom mappings can also be created. In your config.json file, instead of assigning `"mapping"` to a string, assign it to an object (which will be converted to a map).
+
+As an example, for an input CSV file with the headers `FILE_PATH`, `PAT_ID`, `MRNUMBER`, and `DOC_TYPE`, a custom mapping can be created like this:
+
+_Config.json_
+
+```JSON
+"mapping": {
+    "FILE_PATH": "file",
+    "DOC_TYPE": "doc_type",
+    "MRNUMBER": "mrnumber",
+    "PAT_ID": "pat_id"
+},
+```
 
 Here is an example of a CSV file containing 6 documents to be uploaded:
 
@@ -377,21 +449,35 @@ testing_files/112.txt,14,US,18,"","OFFICE","2008-08-10 00:00:00"
 testing_files/113.txt,14,US,18,"","OFFICE","2008-08-10 00:00:00"
 ```
 
+#### Outputs
+
+For each input CSV file, a folder will be created with the name of that file for the job output. Inside, there will be a success.csv and an errors.csv file.
+
+##### Successes
+
+The headers in the sucess.csv file will be the same headers as the input CSV file.
+
+If you re-run a migration job, **do not delete your success.csv file**. This file is used to keep track of files that have already been uploaded and will avoid uploading duplicate files in future jobs.
+
+##### Errors
+
+The headers in the errors.csv file will be the same headers as the input CSV file.
+
+A new errors.csv file is generated for each migration job, so duplicate error messages will not appear.
+
 Once you have created your CSV file containing all the files you want to upload, you can upload them by invoking the `mie.uploadDocs()` function.
 
-The basic structure of the request is as follows:
+#### Example CSV
 
-```javascript
-mie.uploadDocs("filesToUpload.csv");
+An input CSV file with mapping `two` may look something like this
+
+```CSV
+filepath,doctype,mrnumber
+testing_files/29.jpg,WCPHOTO,10033
+testing_files/110.txt,US,10033
+testing_files/Hart_109.txt,US,10033
+testing_files/Doe.html,ORDIM,10033
 ```
-
-`mie.uploadDocs()` accepts the following parameter:
-
-| Name           | Required? | Type   | Description                                             |
-| -------------- | --------- | ------ | ------------------------------------------------------- |
-| `csv_filename` | Required  | String | Your CSV file path containing your documents to upload. |
-
-**Response Format:** For each file you attempt to upload, the status of the upload will either be placed in `/Upload Status/success.csv` or in `/Upload Status/errors.csv`. Each file contains the headers `FILE`, `PAT_ID`, and `STATUS`. Results are appended to the previous. **If you delete individual statuses in either file, do not delete the headers, or the program may crash!**
 
 > **NOTE:** While MIE API Tools supports _most_ storage types, some are not supported (yet). However, there are work-arounds. For example, `storage_type: 13 (.htm)` files do not upload correctly to WebChart. Neither do `.tif` or `.tiff` files. As a result, all `.htm` files are automatically converted to `.html` files. Similarly, all `.tif` and `.tiff` files are automatically converted to `.png` files.
 
