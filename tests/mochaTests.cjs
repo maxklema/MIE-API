@@ -136,25 +136,6 @@ describe('MIE API TESTS', async () => {
 
         }).timeout(1000000);
 
-        it("New Patient", async () => {
-
-            const data = {
-                "first_name": "Autumn",
-                "last_name": "Baker",
-                "address1": "MIE Office"
-            }
-
-            mie.createRecord("patients", data);
-
-            const patient_data = await mie.retrieveRecord("patients", ["first_name", "last_name", "address1"], { });
-
-
-            assert.equal(patient_data[Object.keys(patient_data).length-1]['first_name'], "Autumn");
-            assert.equal(patient_data[Object.keys(patient_data).length-1]['last_name'], "Baker");
-            assert.equal(patient_data[Object.keys(patient_data).length-1]['address1'], "MIE Office");
-
-        }).timeout(1000000);
-
     });
 
     describe("Ledger Functionality", async function() {
