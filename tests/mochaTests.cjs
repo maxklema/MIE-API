@@ -2,7 +2,6 @@ const assert = require('assert');
 const mie = require('../index.cjs');
 const fs = require('fs');
 const path = require('path');
-const os = require('os');
 
 mie.URL.value = process.env.URL;
 mie.practice.value = process.env.PRACTICE;
@@ -27,9 +26,10 @@ describe('MIE API TESTS', async () => {
 
     describe("Retrieve Records", async () => {
         
-        it('Retrieve Records - No Fields', async () => {
+        it.only('Retrieve Records - No Fields', async () => {
             
             const data = await mie.retrieveRecord("patients", [], {pat_id: 18});
+
             assert.equal(data["meta"]["status"], "200");
             assert.equal(data['db'][0]['spouse_birthdate'], "1930-01-15 00:00:00");
 

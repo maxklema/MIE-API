@@ -40,7 +40,7 @@ jobs:
           PASSWORD: ${{ secrets.PASSWORD }}
           GEMINI_KEY: ${{ secrets.GEMINI_KEY }}
           URL: ${{ secrets.URL }}
-          PRACTICE: ${{ secrets.PRACTICE }}
+          PRACTICE: ${{ secrets.HANDLE }}
       - name: Perform Mocha Tests - 2/2
         run: npm run migrations
         env:
@@ -76,7 +76,7 @@ jobs:
           PASSWORD: ${{ secrets.PASSWORD }}
           GEMINI_KEY: ${{ secrets.GEMINI_KEY }}
           URL: ${{ secrets.URL }}
-          PRACTICE: ${{ secrets.PRACTICE }}
+          PRACTICE: ${{ secrets.HANDLE }}
       - name: Perform Mocha Tests - 2/2
         run: npm run migrations
         env:
