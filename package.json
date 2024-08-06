@@ -29,8 +29,7 @@
   "type": "module",
   "scripts": {
     "test": "npx mocha tests/mochaTests.cjs tests/mochaTests.mjs",
-    "headerTestOne": "npx mocha tests/mochaHeaderOne.cjs --mapping one",
-    "headerTestTwo": "npx mocha tests/mochaHeaderTwo.cjs --mapping two",
+    "migrations": "npx mocha tests/migrationTests.cjs",
     "publish:npm": "npm publish",
     "publish:github": "npm publish --registry=https://npm.pkg.github.com"
   },

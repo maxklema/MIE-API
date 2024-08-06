@@ -12,7 +12,7 @@ mapOne.set("storageID", "storage_id");
 mapOne.set("serviceLocation", "service_location");
 mapOne.set("originDate", "origin_date");
 mapOne.set("enterDate", "enter_date");
-mapOne.set("revisionDater", "revision_date");
+mapOne.set("revisionDate", "revision_date");
 mapOne.set("serviceDate", "service_date");
 mapOne.set("approxServiceDate", "approx_service_date");
 mapOne.set("interface", "interface");
@@ -43,4 +43,3 @@ mapTwo.set("allowforteaching", "allow_for_teaching");
 mapTwo.set("subject", "subject");
 
 module.exports = { mapOne, mapTwo }
-

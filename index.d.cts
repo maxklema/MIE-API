@@ -20,7 +20,7 @@ declare module '@maxklema/mie-api-tools' {
     export function updateRecord(endpoint: string, identifier: object, json_options: object): object;
     export function createRecord(endpoint: string, new_data: object): object;
     export function downloadDocs(queryString: object, directory: string, optimization: number): void;
-    export function uploadDocs(csv_file: string): void;
+    export function migrateData(configJSON: object): void;
     export function getAllPatientRecords(patID: number, options: object): Promise<string>;
     export function summarizePatient(patID: number, options: object): Promise<string>;
     export function queryPatient(patID: number, query: string, options: object): Promise<string>;

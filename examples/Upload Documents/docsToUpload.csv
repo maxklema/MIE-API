@@ -1,4 +1,4 @@
-document_name,storage_type,doc_type,pat_id,subject,service_location,service_date
+filepath,storagetype,doctype,patid,subject,servicelocation,servicedate
 Documents/autumn.jpg,8,WCPHOTO,18,"Autumn Patient Photo","OFFICE","2012-04-25 12:05:29"
 Documents/bill.jpg,8,WCPHOTO,14,"Bill Patient Photo","OFFICE","2003-09-10 18:24:31"
 Documents/Doe.html,4,ORDIM,14,"Bill Doe Order Imaging","OFFICE","2010-09-16 11:13:14"
